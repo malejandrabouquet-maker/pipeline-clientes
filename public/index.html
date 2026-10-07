@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Pipeline Agendas completo</title>
+<title>Pipeline Clientes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -97,6 +97,7 @@ input[type=search]:focus-visible{outline:2px solid var(--c-abi);outline-offset:1
 .hidden{display:none!important}
 .nav{display:inline-block;margin-top:6px;font-size:14px;font-weight:600;color:var(--ink);text-decoration:none;border-bottom:2px solid var(--c-abi)}
 .nav:hover{color:var(--c-abi)}
+.period{font-size:clamp(17px,2vw,22px);font-weight:600;color:var(--muted);margin-top:6px}
 footer{color:var(--muted);font-size:12.5px;margin-top:22px;max-width:76ch}
 @media (max-width:700px){.wrap{padding:18px 12px 36px}.total b{font-size:36px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -121,7 +122,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:22px;max-width:76ch}
 <body>
 <div class="wrap">
   <header>
-    <h1 id="title">Pipeline Agendas completo</h1>
+    <div><h1 id="title">PIPELINE CLIENTES</h1><div class="period" id="period"></div></div>
     <div class="snap" id="snap">Todas las oportunidades del pipeline Agendas de GoHighLevel.</div>
   </header>
 
@@ -275,8 +276,8 @@ function currentRange(){
   else if(state.preset==="custom"){a=state.from;b=state.to}
   else a=addDays(t,-6);
   const days=daysBetween(a,b);
-  const ttl=a===b?`Agendas del ${longFmt.format(keyToDate(a))}`:`Agendas del ${longFmt.format(keyToDate(a))} al ${longFmt.format(keyToDate(b))}`;
-  document.getElementById("title").textContent=ttl; document.title=ttl;
+  const ttl=a===b?`Del ${longFmt.format(keyToDate(a))}`:`Del ${longFmt.format(keyToDate(a))} al ${longFmt.format(keyToDate(b))}`;
+  document.getElementById("title").textContent="PIPELINE CLIENTES"; document.getElementById("period").textContent=ttl; document.title="Pipeline Clientes";
   return days;
 }
 function buildRange(){
