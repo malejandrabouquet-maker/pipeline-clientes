@@ -123,7 +123,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:22px;max-width:76ch}
 <div class="wrap">
   <header>
     <div><h1 id="title">PIPELINE CLIENTES</h1><div class="period" id="period"></div></div>
-    <div class="snap" id="snap">Todas las oportunidades del pipeline Agendas de GoHighLevel.</div>
+    <div class="snap" id="snap">Oportunidades del pipeline Agendas según su último cambio de etapa.</div>
   </header>
 
   <div class="range" id="range">
@@ -162,7 +162,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:22px;max-width:76ch}
   <div class="list hidden" id="list"></div>
   </div>
 
-  <footer>Muestra todas las oportunidades del pipeline Agendas creadas en el período, hayan llegado o no a Slack; el día es el día en que se creó la oportunidad en GHL. El origen sale del campo "fuente" de la oportunidad: VSL es Ads, VSL BIO es Bio, Solicitud de sesión estratégica es Formulario, y "Sin origen" son oportunidades sin fuente cargada (por ejemplo, creadas a mano). "Otro" agrupa cualquier otra fuente; en la vista de lista se ve el nombre exacto. Las etapas cortan en Nutrición - confirmación; las que ya pasaron a los closers cuentan como confirmadas.</footer>
+  <footer>Muestra todas las oportunidades del pipeline Agendas cuya etapa cambió por última vez en el período, hayan llegado o no a Slack; el día es el del último cambio de etapa (si nunca cambió, el día en que se creó). Se revisan oportunidades creadas hasta 90 días antes del período. El origen sale del campo "fuente" de la oportunidad: VSL es Ads, VSL BIO es Bio, Solicitud de sesión estratégica es Formulario, y "Sin origen" son oportunidades sin fuente cargada (por ejemplo, creadas a mano). "Otro" agrupa cualquier otra fuente; en la vista de lista se ve el nombre exacto. Las etapas cortan en Nutrición - confirmación; las que ya pasaron a los closers cuentan como confirmadas.</footer>
 </div>
 
 <script>
@@ -254,11 +254,11 @@ async function load(fresh){
     state.data=(j.rows||[]).map((x,idx)=>({...x,idx}));
     if(!state.data.length){
       document.getElementById("content").classList.add("hidden");
-      setStatus(`<b>No hay agendas en este período.</b>No se creó ninguna oportunidad en el pipeline Agendas entre el ${longFmt.format(keyToDate(range[0]))} y el ${longFmt.format(keyToDate(range[range.length-1]))}.`);
+      setStatus(`<b>No hay agendas en este período.</b>Ninguna oportunidad del pipeline Agendas cambió de etapa entre el ${longFmt.format(keyToDate(range[0]))} y el ${longFmt.format(keyToDate(range[range.length-1]))}.`);
       return;
     }
     state.days.clear();
-    document.getElementById("snap").textContent=`Todas las oportunidades del pipeline Agendas de GoHighLevel. Actualizado hoy a las ${hmFmt.format(new Date(j.updatedAt||Date.now()))}.`;
+    document.getElementById("snap").textContent=`Oportunidades del pipeline Agendas según su último cambio de etapa. Actualizado hoy a las ${hmFmt.format(new Date(j.updatedAt||Date.now()))}.`;
     document.getElementById("status").classList.add("hidden");
     document.getElementById("content").classList.remove("hidden");
     buildDayChips(); render();
@@ -360,7 +360,7 @@ function render(){
       el.innerHTML=`<div class="nm">${esc(r.name)}</div><div class="meta"><span class="tag st" style="background:${r.cat==="rev"?"#4B5563":STAGE_COL(r.stage)}">${esc(r.stage)}</span><span class="tag">${SRC[r.src]}</span></div>${r.why?`<div class="why">${esc(r.why)}</div>`:""}`;col.append(el)});
     board.append(col);
   });
-  list.innerHTML=`<table><thead><tr><th>Nombre</th><th>Correo</th><th>Entró a GHL</th><th>Fuente en GHL</th><th>Origen</th><th>Etapa</th><th>Estado</th></tr></thead><tbody>${
+  list.innerHTML=`<table><thead><tr><th>Nombre</th><th>Correo</th><th>Último cambio de etapa</th><th>Fuente en GHL</th><th>Origen</th><th>Etapa</th><th>Estado</th></tr></thead><tbody>${
     rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${r.email?esc(r.email):"<span style='color:var(--muted)'>–</span>"}</td><td>${dayLbl(r.day)}</td><td>${r.source?esc(r.source):"<span style='color:var(--muted)'>–</span>"}</td><td>${SRC[r.src]}</td><td><span class="tag st" style="background:${r.cat==="rev"?"#4B5563":STAGE_COL(r.stage)}">${esc(r.stage)}</span></td><td>${CATS.find(c=>c.k===r.cat).n}</td></tr>`).join("")
   }</tbody></table>${rows.length?"":`<div class="empty" style="padding:16px">No hay agendas con estos filtros.</div>`}`;
 }
