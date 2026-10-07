@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pipeline Agendas completo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#F3F4F7; --panel:#FFFFFF; --ink:#1C2230; --muted:#667085; --line:#E3E6EC; --chip:#EEF0F4;
+  --c-sin:#6B7280; --c-rev:#4B5563; --c-tri:#6366F1; --c-pn:#DC2626; --c-pi:#9D174D; --c-ca:#78716C; --c-abi:#E5940B; --c-con:#16A34A; --c-lla:#9B4DEB; --c-per:#D93636;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#181B22; --panel:#21252E; --ink:#E9ECF2; --muted:#9AA3B2; --line:#323846; --chip:#2B303B;
+    --c-sin:#9CA3AF; --c-rev:#8A93A3; --c-tri:#8B8DF7; --c-pn:#F05252; --c-pi:#E0628E; --c-ca:#A8A29E; --c-abi:#F5A524; --c-con:#2FBF62; --c-lla:#B57BF5; --c-per:#F05252;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#181B22; --panel:#21252E; --ink:#E9ECF2; --muted:#9AA3B2; --line:#323846; --chip:#2B303B;
+  --c-sin:#9CA3AF; --c-rev:#8A93A3; --c-tri:#8B8DF7; --c-pn:#F05252; --c-pi:#E0628E; --c-ca:#A8A29E; --c-abi:#F5A524; --c-con:#2FBF62; --c-lla:#B57BF5; --c-per:#F05252;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1360px;margin:0 auto;padding:28px 20px 48px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:22px}
+h1{font-size:clamp(26px,3.4vw,38px);line-height:1.05;font-weight:800;letter-spacing:-.02em;margin:0}
+.snap{color:var(--muted);font-size:13.5px}
+.num{font-variant-numeric:tabular-nums}
+
+/* Resumen */
+.summary{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:16px}
+.total{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+.total b{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.total span{color:var(--muted)}
+.bar{display:flex;height:34px;border-radius:9px;overflow:hidden;background:var(--chip)}
+.bar button{border:0;padding:0;cursor:pointer;color:#fff;font:700 13px/1 inherit;font-family:inherit;display:flex;align-items:center;justify-content:center;min-width:0;transition:filter .15s}
+.bar button:hover{filter:brightness(1.08)}
+.bar button:focus-visible{outline:3px solid var(--ink);outline-offset:-3px}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:4px 18px;margin-top:14px}
+.leg{display:flex;align-items:center;gap:9px;padding:6px 0;background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:6px}
+.leg:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.dot{width:11px;height:11px;border-radius:3px;flex:none}
+.leg .n{font-weight:700;font-size:20px;min-width:2ch}
+.leg .l{color:var(--muted);font-size:13.5px;line-height:1.2}
+.leg.off{opacity:.38}
+.sub{font-weight:700;font-size:14.5px;margin:22px 0 10px}
+.summary .sub0{font-weight:700;font-size:14.5px;margin:0 0 10px}
+
+.days{margin-top:18px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;font-size:13px}
+tbody tr:last-child td{border-bottom:0}
+tfoot td{font-weight:700;border-top:2px solid var(--line);border-bottom:0}
+
+/* Filtros */
+.filters{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:18px 0 14px}
+.group{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.group > span{color:var(--muted);font-size:13px;margin-right:2px}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:6px 12px;font:500 13.5px/1 inherit;font-family:inherit;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.chip:focus-visible{outline:2px solid var(--c-abi);outline-offset:2px}
+input[type=search]{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:8px 12px;font:inherit;font-size:14px;min-width:220px;flex:1;max-width:320px}
+input[type=search]:focus-visible{outline:2px solid var(--c-abi);outline-offset:1px}
+.spacer{flex:1}
+
+/* Tablero */
+.board{display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:12px;overflow-x:auto;padding-bottom:6px;align-items:start}
+.col{background:var(--chip);border-radius:12px;padding:10px;min-height:120px}
+.col h2{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:700;margin:2px 4px 10px}
+.col h2 .count{margin-left:auto;font-weight:700;color:var(--muted)}
+.col h2 .dot{width:10px;height:10px}
+.col .stages{color:var(--muted);font-size:12.5px;margin:-6px 4px 10px;line-height:1.3}
+.card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--cat);border-radius:9px;padding:10px 12px;margin-bottom:8px}
+.card .nm{font-weight:650;font-size:14.5px;line-height:1.25;word-break:break-word}
+.card .em{color:var(--muted);font-size:12.5px;word-break:break-all;margin-top:2px}
+.card .meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;align-items:center}
+.tag{font-size:11.5px;font-weight:600;padding:3px 7px;border-radius:5px;background:var(--chip);color:var(--ink);line-height:1.2}
+.tag.st{color:#fff}
+.when{font-size:12px;color:var(--muted);margin-left:auto}
+.empty{color:var(--muted);font-size:13px;padding:10px 4px}
+
+/* Lista */
+.list{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow-x:auto}
+.list table{min-width:640px}
+.list td,.list th{text-align:left}
+.list td .tag.st{display:inline-block}
+.hidden{display:none!important}
+.nav{display:inline-block;margin-top:6px;font-size:14px;font-weight:600;color:var(--ink);text-decoration:none;border-bottom:2px solid var(--c-abi)}
+.nav:hover{color:var(--c-abi)}
+footer{color:var(--muted);font-size:12.5px;margin-top:22px;max-width:76ch}
+@media (max-width:700px){.wrap{padding:18px 12px 36px}.total b{font-size:36px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.range{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-6px 0 18px}
+.range input[type=date]{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:6px 10px;font:inherit;font-size:14px}
+.btn{border:1px solid var(--ink);background:var(--ink);color:var(--panel);border-radius:9px;padding:7px 14px;font:600 14px/1 inherit;font-family:inherit;cursor:pointer}
+.btn.ghost{background:var(--panel);color:var(--ink);border-color:var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+.status{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px;font-size:14.5px}
+.status.err{border-color:var(--c-per)}
+.status b{display:block;margin-bottom:4px}
+.status ul{margin:6px 0 0;padding-left:18px}
+.steps{list-style:none;padding:0;margin:8px 0 0}
+.steps li{padding:2px 0;color:var(--muted)}
+.steps li.done{color:var(--ink)}
+.steps li.done::before{content:"✓ ";color:var(--c-con);font-weight:700}
+.steps li.now::before{content:"… ";font-weight:700}
+.why{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.3}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title">Pipeline Agendas completo</h1>
+    <div class="snap" id="snap">Todas las oportunidades del pipeline Agendas de GoHighLevel.</div>
+  </header>
+
+  <div class="range" id="range">
+    <div class="group" id="fRange"></div>
+    <span id="custom" class="hidden" style="display:inline-flex;gap:6px;align-items:center">
+      <input type="date" id="dFrom" aria-label="Desde"> <span>a</span> <input type="date" id="dTo" aria-label="Hasta">
+      <button class="btn ghost" type="button" id="goCustom">Ver</button>
+    </span>
+    <div class="spacer"></div>
+    <button class="btn ghost" type="button" id="refresh">Actualizar</button>
+  </div>
+
+  <div id="status" class="status" role="status" aria-live="polite">Cargando…</div>
+
+  <div id="content" class="hidden">
+  <section class="summary" aria-label="Resumen">
+    <div class="total"><b class="num" id="tot">0</b><span id="totLbl">oportunidades</span></div>
+    <div class="sub0">Estado</div>
+    <div class="bar" id="bar" role="group" aria-label="Distribución por estado"></div>
+    <div class="legend" id="legend"></div>
+    <div class="sub">Por dónde entró</div>
+    <div class="bar" id="barSrc" role="group" aria-label="Distribución por origen"></div>
+    <div class="legend" id="legendSrc"></div>
+    <div class="days"><table id="daysTbl"></table></div>
+  </section>
+
+  <div class="filters">
+    <div class="group" id="fSrc"><span>Origen</span></div>
+    <div class="group" id="fDay"><span>Día</span></div>
+    <input type="search" id="q" placeholder="Buscar por nombre o correo" aria-label="Buscar por nombre o correo">
+    <div class="spacer"></div>
+    <div class="group" id="fView"></div>
+  </div>
+
+  <div class="board" id="board"></div>
+  <div class="list hidden" id="list"></div>
+  </div>
+
+  <footer>Muestra todas las oportunidades del pipeline Agendas creadas en el período, hayan llegado o no a Slack; el día es el día en que se creó la oportunidad en GHL. El origen sale del campo "fuente" de la oportunidad: VSL es Ads, VSL BIO es Bio, Solicitud de sesión estratégica es Formulario, y "Sin origen" son oportunidades sin fuente cargada (por ejemplo, creadas a mano). "Otro" agrupa cualquier otra fuente; en la vista de lista se ve el nombre exacto. Las etapas cortan en Nutrición - confirmación; las que ya pasaron a los closers cuentan como confirmadas.</footer>
+</div>
+
+<script>
+/* ---------- configuración ---------- */
+const MAX_DAYS = 31;
+
+const STAGE_CAT = n => {
+  const s = norm(n);
+  if (s.startsWith("nutricion")) return "con";
+  if (/^(asistencia|no asistio|sena|venta)/.test(s)) return "con";
+  if (s.startsWith("descualificado") || s.startsWith("cancelado")) return "per";
+  if (s.startsWith("nuevo lead") || s.startsWith("lead confirmar")) return "sin";
+  if (/^(triaje|conversando|formulario enviado|no responde|interesados sin dinero)/.test(s)) return "abi";
+  return "abi";
+};
+const STAGE_COL = n => {
+  const s = norm(n);
+  if (s.startsWith("nutricion")||/^(asistencia|no asistio|sena|venta)/.test(s)) return "#16A34A";
+  if (s.startsWith("descualificado")&&s.includes("nicho")) return "#DC2626";
+  if (s.startsWith("descualificado")) return "#9D174D";
+  if (s.startsWith("cancelado")) return "#78716C";
+  if (s.startsWith("triaje")) return "#6366F1";
+  if (s.startsWith("no responde")) return "#DB2777";
+  if (s.startsWith("conversando")||s.startsWith("formulario")) return "#C77C05";
+  if (s.startsWith("interesados")) return "#6366F1";
+  return "#4B5563";
+};
+const CATS = [
+  {k:"sin",n:"Sin trabajar",d:"Nuevo Lead, Confirmar nicho"},
+  {k:"abi",n:"Abiertas",d:"Conversando, Formulario enviado, No responde, Interesados sin dinero"},
+  {k:"tri",n:"Triaje",d:"Antes de definir si pasan a llamada"},
+  {k:"con",n:"Confirmadas",d:"Nutrición - confirmación (y las que ya pasaron a los closers)"},
+  {k:"pn",n:"Descalificadas por nicho",d:"Descualificado por nicho"},
+  {k:"pi",n:"Descalificadas por inversión",d:"Descualificado por inversión"},
+  {k:"ca",n:"Canceladas",d:"Cancelado - Setter"},
+  {k:"rev",n:"Para revisar",d:"No se encontraron en GHL o el match es dudoso"}
+];
+const SRC = {A:"Ads",B:"Bio",W:"Webinar",F:"Formulario",M:"Sin origen",O:"Otro"};
+const SRCCOL = {A:"#2563EB",B:"#0D9488",W:"#9333EA",F:"#7C8798",M:"#B4BAC4",O:"#A16207"};
+
+/* ---------- utilidades ---------- */
+function norm(s){return (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim()}
+function toks(s){return norm(s).split(" ").filter(w=>w.length>1)}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+const tz="America/Argentina/Buenos_Aires";
+const keyFmt=new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"});
+const lblFmt=new Intl.DateTimeFormat("es-AR",{timeZone:tz,weekday:"short",day:"numeric",month:"numeric"});
+const longFmt=new Intl.DateTimeFormat("es-AR",{timeZone:tz,day:"numeric",month:"long"});
+const hmFmt=new Intl.DateTimeFormat("es-AR",{timeZone:tz,hour:"2-digit",minute:"2-digit",hour12:false});
+const todayKey=()=>keyFmt.format(new Date());
+const keyToDate=k=>new Date(k+"T12:00:00-03:00");
+const addDays=(k,n)=>keyFmt.format(new Date(keyToDate(k).getTime()+n*864e5));
+const dayStartSec=k=>Math.floor(new Date(k+"T00:00:00-03:00").getTime()/1000);
+const dayLbl=k=>cap(lblFmt.format(keyToDate(k)));
+function daysBetween(a,b){const out=[];let k=a;while(k<=b&&out.length<=MAX_DAYS){out.push(k);k=addDays(k,1)}return out}
+
+/* ---------- estado ---------- */
+const state={preset:"7d",from:null,to:null,days:new Set(),cats:new Set(),srcs:new Set(),q:"",view:"board",data:[],range:[]};
+
+
+/* ---------- carga desde la API ---------- */
+const PASS_KEY="pipeline_agendas_pass";
+function getPass(){try{return localStorage.getItem(PASS_KEY)||""}catch(e){return ""}}
+function setPass(v){try{v?localStorage.setItem(PASS_KEY,v):localStorage.removeItem(PASS_KEY)}catch(e){}}
+function setStatus(html,err){const s=document.getElementById("status");s.innerHTML=html;s.className="status"+(err?" err":"");s.classList.remove("hidden")}
+function askPass(msg){
+  document.getElementById("content").classList.add("hidden");
+  setStatus(`<b>Ingresá la contraseña del tablero</b>${msg?`<div style="color:var(--c-per);margin:4px 0">${esc(msg)}</div>`:""}
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><input type="password" id="pw" autocomplete="current-password" aria-label="Contraseña" style="border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:8px 12px;font:inherit;min-width:220px">
+    <button class="btn" type="button" id="pwGo">Entrar</button></div>`,!!msg);
+  const go=()=>{const v=document.getElementById("pw").value.trim();if(v){setPass(v);load()}};
+  document.getElementById("pwGo").addEventListener("click",go);
+  document.getElementById("pw").addEventListener("keydown",e=>{if(e.key==="Enter")go()});
+  document.getElementById("pw").focus();
+}
+async function load(fresh){
+  if(running) return;
+  const pass=getPass(); if(!pass){askPass();return}
+  running=true; document.getElementById("refresh").disabled=true;
+  const range=currentRange(); state.range=range;
+  setStatus("<b>Actualizando…</b>Leyendo las agendas de Slack y buscando sus etapas en GoHighLevel. Tarda unos segundos.");
+  try{
+    const qs=new URLSearchParams({from:range[0],to:range[range.length-1]}); if(fresh) qs.set("fresh","1");
+    const r=await fetch("/api/pipeline?"+qs,{headers:{"x-pass":pass}});
+    let j={}; try{j=await r.json()}catch(e){}
+    if(r.status===401){setPass("");running=false;document.getElementById("refresh").disabled=false;askPass("Contraseña incorrecta.");return}
+    if(!r.ok) throw new Error(j.message||("Error "+r.status));
+    state.data=(j.rows||[]).map((x,idx)=>({...x,idx}));
+    if(!state.data.length){
+      document.getElementById("content").classList.add("hidden");
+      setStatus(`<b>No hay agendas en este período.</b>No se creó ninguna oportunidad en el pipeline Agendas entre el ${longFmt.format(keyToDate(range[0]))} y el ${longFmt.format(keyToDate(range[range.length-1]))}.`);
+      return;
+    }
+    state.days.clear();
+    document.getElementById("snap").textContent=`Todas las oportunidades del pipeline Agendas de GoHighLevel. Actualizado hoy a las ${hmFmt.format(new Date(j.updatedAt||Date.now()))}.`;
+    document.getElementById("status").classList.add("hidden");
+    document.getElementById("content").classList.remove("hidden");
+    buildDayChips(); render();
+  }catch(e){
+    setStatus(`<b>No se pudo actualizar el tablero.</b>${esc(e.message||"Error de conexión.")} Probá con Actualizar en unos segundos.`,true);
+  }finally{running=false;document.getElementById("refresh").disabled=false}
+}
+
+/* ---------- rango ---------- */
+function currentRange(){
+  const t=todayKey();
+  let a,b=t;
+  if(state.preset==="hoy") a=t;
+  else if(state.preset==="semana"){const dow=(keyToDate(t).getUTCDay()+6)%7;a=addDays(t,-dow)}
+  else if(state.preset==="custom"){a=state.from;b=state.to}
+  else a=addDays(t,-6);
+  const days=daysBetween(a,b);
+  const ttl=a===b?`Agendas del ${longFmt.format(keyToDate(a))}`:`Agendas del ${longFmt.format(keyToDate(a))} al ${longFmt.format(keyToDate(b))}`;
+  document.getElementById("title").textContent=ttl; document.title=ttl;
+  return days;
+}
+function buildRange(){
+  const g=document.getElementById("fRange");
+  [["hoy","Hoy"],["7d","Últimos 7 días"],["semana","Esta semana"],["custom","Elegir fechas"]].forEach(([k,l])=>{
+    g.append(chip(l,state.preset===k,()=>{state.preset=k;syncRange();if(k!=="custom")load()}));
+  });
+  const t=todayKey(); const f=document.getElementById("dFrom"),to=document.getElementById("dTo");
+  f.value=addDays(t,-6); to.value=t; f.max=t; to.max=t;
+  document.getElementById("goCustom").addEventListener("click",()=>{
+    let a=f.value,b=to.value; if(!a||!b) return; if(a>b)[a,b]=[b,a];
+    if(daysBetween(a,b).length>MAX_DAYS){a=addDays(b,-(MAX_DAYS-1));f.value=a}
+    state.from=a;state.to=b;load();
+  });
+  document.getElementById("refresh").addEventListener("click",()=>load(true));
+}
+function syncRange(){
+  const keys=["hoy","7d","semana","custom"];
+  [...document.querySelectorAll("#fRange .chip")].forEach((b,i)=>b.setAttribute("aria-pressed",state.preset===keys[i]));
+  document.getElementById("custom").classList.toggle("hidden",state.preset!=="custom");
+}
+
+/* ---------- render ---------- */
+function chip(label,pressed,on){const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=label;b.setAttribute("aria-pressed",pressed?"true":"false");b.addEventListener("click",on);return b}
+function toggle(set,k){set.has(k)?set.delete(k):set.add(k)}
+function buildDayChips(){
+  const fd=document.getElementById("fDay");fd.querySelectorAll(".chip").forEach(c=>c.remove());
+  fd.append(chip("Todos",true,()=>{state.days.clear();render()}));
+  daysWithData().forEach(k=>fd.append(chip(dayLbl(k),false,()=>{toggle(state.days,k);render()})));
+}
+const daysWithData=()=>[...new Set(state.data.map(r=>r.day))].sort();
+function buildSrcChips(){
+  const fs=document.getElementById("fSrc");
+  fs.append(chip("Todos",true,()=>{state.srcs.clear();render()}));
+  Object.keys(SRC).forEach(k=>{const b=chip(SRC[k],false,()=>{state.srcs.clear();state.srcs.add(k);render()});
+    b.insertAdjacentHTML("afterbegin",`<span class="dot" style="background:${SRCCOL[k]};display:inline-block;width:9px;height:9px;margin-right:6px;vertical-align:0"></span>`);fs.append(b)});
+}
+function buildStatic(){
+  buildSrcChips();
+  const fv=document.getElementById("fView");
+  fv.append(chip("Tablero",true,()=>{state.view="board";render()}));
+  fv.append(chip("Lista",false,()=>{state.view="list";render()}));
+  document.getElementById("q").addEventListener("input",e=>{state.q=norm(e.target.value);render()});
+}
+function syncChips(){
+  const DAYS=daysWithData(); const fd=[...document.querySelectorAll("#fDay .chip")];
+  if(fd.length){fd[0].setAttribute("aria-pressed",state.days.size===0);fd.slice(1).forEach((b,i)=>b.setAttribute("aria-pressed",state.days.has(DAYS[i])))}
+  const fsc=[...document.querySelectorAll("#fSrc .chip")]; const sk=Object.keys(SRC);
+  if(fsc.length){fsc[0].setAttribute("aria-pressed",state.srcs.size===0);fsc.slice(1).forEach((b,i)=>b.setAttribute("aria-pressed",state.srcs.has(sk[i])))}
+  const fv=[...document.querySelectorAll("#fView .chip")];
+  fv[0].setAttribute("aria-pressed",state.view==="board");fv[1].setAttribute("aria-pressed",state.view==="list");
+}
+const qOk=r=>!state.q||norm(r.name).includes(state.q)||norm(r.email).includes(state.q);
+const dOk=r=>state.days.size===0||state.days.has(r.day);
+function render(){
+  syncChips();
+  const base=state.data.filter(r=>dOk(r)&&qOk(r)&&(state.srcs.size===0||state.srcs.has(r.src)));
+  const rows=base.filter(r=>state.cats.size===0||state.cats.has(r.cat));
+  const cats=CATS.filter(c=>c.k!=="rev"||state.data.some(r=>r.cat==="rev"));
+  const counts=Object.fromEntries(CATS.map(c=>[c.k,base.filter(r=>r.cat===c.k).length]));
+  document.getElementById("tot").textContent=base.length;
+  document.getElementById("totLbl").textContent=base.length===1?"oportunidad en el pipeline":"oportunidades en el pipeline";
+  drawBar("bar","legend",cats.map(c=>({k:c.k,n:c.n,v:counts[c.k],col:`var(--c-${c.k})`,d:c.d})),state.cats,base.length);
+  const forSrc=state.data.filter(r=>dOk(r)&&qOk(r)&&(state.cats.size===0||state.cats.has(r.cat)));
+  drawBar("barSrc","legendSrc",Object.keys(SRC).map(k=>({k,n:SRC[k],v:forSrc.filter(r=>r.src===k).length,col:SRCCOL[k]})),state.srcs,forSrc.length);
+  const t=document.getElementById("daysTbl"); const DAYS=daysWithData().filter(k=>state.days.size===0||state.days.has(k));
+  let h=`<thead><tr><th>Día</th><th>Agendas</th>${cats.map(c=>`<th>${c.n}</th>`).join("")}</tr></thead><tbody>`;
+  DAYS.forEach(k=>{const rs=base.filter(r=>r.day===k);h+=`<tr><td>${dayLbl(k)}</td><td class="num">${rs.length}</td>${cats.map(c=>`<td class="num">${rs.filter(r=>r.cat===c.k).length||"–"}</td>`).join("")}</tr>`});
+  h+=`</tbody><tfoot><tr><td>Total</td><td class="num">${base.length}</td>${cats.map(c=>`<td class="num">${counts[c.k]}</td>`).join("")}</tr></tfoot>`;t.innerHTML=h;
+  const board=document.getElementById("board"),list=document.getElementById("list");
+  board.style.gridTemplateColumns=`repeat(${cats.filter(c=>!(state.cats.size&&!state.cats.has(c.k))).length},minmax(230px,1fr))`;
+  board.classList.toggle("hidden",state.view!=="board");list.classList.toggle("hidden",state.view!=="list");board.innerHTML="";
+  cats.forEach(c=>{
+    if(state.cats.size&&!state.cats.has(c.k))return;
+    const items=rows.filter(r=>r.cat===c.k);
+    const col=document.createElement("section");col.className="col";col.setAttribute("aria-label",c.n);
+    col.innerHTML=`<h2><span class="dot" style="background:var(--c-${c.k})"></span>${c.n}<span class="count num">${items.length}</span></h2><div class="stages">${c.d}</div>`;
+    if(!items.length)col.insertAdjacentHTML("beforeend",`<div class="empty">Nadie en esta columna con los filtros actuales.</div>`);
+    items.forEach(r=>{const el=document.createElement("article");el.className="card";el.style.setProperty("--cat",`var(--c-${c.k})`);
+      el.innerHTML=`<div class="nm">${esc(r.name)}</div><div class="meta"><span class="tag st" style="background:${r.cat==="rev"?"#4B5563":STAGE_COL(r.stage)}">${esc(r.stage)}</span><span class="tag">${SRC[r.src]}</span></div>${r.why?`<div class="why">${esc(r.why)}</div>`:""}`;col.append(el)});
+    board.append(col);
+  });
+  list.innerHTML=`<table><thead><tr><th>Nombre</th><th>Correo</th><th>Entró a GHL</th><th>Fuente en GHL</th><th>Origen</th><th>Etapa</th><th>Estado</th></tr></thead><tbody>${
+    rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${r.email?esc(r.email):"<span style='color:var(--muted)'>–</span>"}</td><td>${dayLbl(r.day)}</td><td>${r.source?esc(r.source):"<span style='color:var(--muted)'>–</span>"}</td><td>${SRC[r.src]}</td><td><span class="tag st" style="background:${r.cat==="rev"?"#4B5563":STAGE_COL(r.stage)}">${esc(r.stage)}</span></td><td>${CATS.find(c=>c.k===r.cat).n}</td></tr>`).join("")
+  }</tbody></table>${rows.length?"":`<div class="empty" style="padding:16px">No hay agendas con estos filtros.</div>`}`;
+}
+function drawBar(barId,legId,items,sel,total){
+  const bar=document.getElementById(barId);bar.innerHTML="";
+  items.forEach(it=>{if(!it.v)return;const b=document.createElement("button");b.type="button";b.style.flex=it.v;b.style.background=it.col;
+    const pct=Math.round(it.v*100/(total||1));b.textContent=pct>=6?pct+"%":"";b.title=`${it.n}: ${it.v} (${pct}%)`;b.setAttribute("aria-label",b.title);
+    if(sel.size&&!sel.has(it.k))b.style.opacity=.35;b.addEventListener("click",()=>{toggle(sel,it.k);render()});bar.append(b)});
+  const lg=document.getElementById(legId);lg.innerHTML="";
+  items.forEach(it=>{const b=document.createElement("button");b.type="button";b.className="leg"+(sel.size&&!sel.has(it.k)?" off":"");
+    b.innerHTML=`<span class="dot" style="background:${it.col}"></span><span class="n num">${it.v}</span><span class="l">${it.n}</span>`;if(it.d)b.title=it.d;
+    b.addEventListener("click",()=>{toggle(sel,it.k);render()});lg.append(b)});
+}
+
+/* ---------- arranque ---------- */
+let running=false;
+buildRange(); syncRange(); buildStatic(); currentRange(); load();
+</script>
+</body>
+</html>
