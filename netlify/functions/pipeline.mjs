@@ -62,14 +62,15 @@ function slim(o, stages) {
     created: Date.parse(o.createdAt || o.dateAdded || 0) || 0,
     changed: Date.parse(o.lastStageChangeAt || o.updatedAt || o.createdAt || 0) || 0,
     source: o.source || "",
+    stageAt: Date.parse(o.lastStageChangeAt || o.createdAt || o.dateAdded || 0) || 0,
   };
 }
-async function searchOpps(stages, { q, sinceMs, max = 1500 }) {
+async function searchOpps(stages, { q, sinceMs, max = 1500, stageId }) {
   const out = [];
   let startAfter, startAfterId;
   for (let page = 0; page < Math.ceil(max / 100); page++) {
     const j = await ghl("/opportunities/search", {
-      location_id: GHL_LOCATION, pipeline_id: GHL_PIPELINE, limit: 100, q, startAfter, startAfterId,
+      location_id: GHL_LOCATION, pipeline_id: GHL_PIPELINE, pipeline_stage_id: stageId, limit: 100, q, startAfter, startAfterId,
     });
     const items = j.opportunities || [];
     for (const o of items) out.push(slim(o, stages));
@@ -101,14 +102,30 @@ function srcCode(source) {
   if (s.includes("solicitud") || s.includes("formulario")) return "F";
   return "O";
 }
+// Filtra por la fecha del último cambio de etapa. Como GHL no permite buscar
+// por esa fecha, se consulta cada etapa en paralelo (ordenadas de la más nueva
+// a la más vieja) y se miran las oportunidades creadas hasta LOOKBACK_DAYS
+// antes del inicio del período.
+const LOOKBACK_DAYS = 90;
 async function buildAll(from, to) {
   const stages = await stageMap();
   const start = dayStart(from), end = dayStart(to) + DAY;
-  const opps = (await searchOpps(stages, { sinceMs: start, max: 3000 })).filter((o) => o.created < end);
-  return opps.sort((a, b) => b.created - a.created).map((o) => {
+  const since = start - LOOKBACK_DAYS * DAY;
+  const perStage = await Promise.all(
+    Object.keys(stages).map((stageId) => searchOpps(stages, { stageId, sinceMs: since, max: 2000 }))
+  );
+  const seen = new Set();
+  const opps = perStage.flat().filter((o) => {
+    if (o.stageAt < start || o.stageAt >= end) return false;
+    const k = o.name + "|" + o.email + "|" + o.created;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  return opps.sort((a, b) => b.stageAt - a.stageAt).map((o) => {
     const stage = o.stage.replace(/\s*\|S$/, "");
     return {
-      name: o.contact || o.name, email: o.email, day: dayKey(o.created), time: hhmm(o.created),
+      name: o.contact || o.name, email: o.email, day: dayKey(o.stageAt), time: hhmm(o.stageAt),
       src: srcCode(o.source), source: o.source || "", stage, cat: stageCat(stage), why: null,
     };
   });
