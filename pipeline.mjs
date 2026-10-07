@@ -115,7 +115,10 @@ async function buildAll(from, to) {
     Object.keys(stages).map((stageId) => searchOpps(stages, { stageId, sinceMs: since, max: 2000 }))
   );
   const seen = new Set();
+  // Las que ya pasaron a los closers (Asistencia, No asistió, Seña, Venta) no se cuentan.
+  const closer = (n) => /^(asistencia|no asistio|sena|venta)/.test(norm(n));
   const opps = perStage.flat().filter((o) => {
+    if (closer(o.stage)) return false;
     if (o.stageAt < start || o.stageAt >= end) return false;
     const k = o.name + "|" + o.email + "|" + o.created;
     if (seen.has(k)) return false;

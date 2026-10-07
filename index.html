@@ -162,7 +162,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:22px;max-width:76ch}
   <div class="list hidden" id="list"></div>
   </div>
 
-  <footer>Muestra todas las oportunidades del pipeline Agendas cuya etapa cambió por última vez en el período, hayan llegado o no a Slack; el día es el del último cambio de etapa (si nunca cambió, el día en que se creó). Se revisan oportunidades creadas hasta 90 días antes del período. El origen sale del campo "fuente" de la oportunidad: VSL es Ads, VSL BIO es Bio, Solicitud de sesión estratégica es Formulario, y "Sin origen" son oportunidades sin fuente cargada (por ejemplo, creadas a mano). "Otro" agrupa cualquier otra fuente; en la vista de lista se ve el nombre exacto. Las etapas cortan en Nutrición - confirmación; las que ya pasaron a los closers cuentan como confirmadas.</footer>
+  <footer>Muestra todas las oportunidades del pipeline Agendas cuya etapa cambió por última vez en el período, hayan llegado o no a Slack; el día es el del último cambio de etapa (si nunca cambió, el día en que se creó). Se revisan oportunidades creadas hasta 90 días antes del período. El origen sale del campo "fuente" de la oportunidad: VSL es Ads, VSL BIO es Bio, Solicitud de sesión estratégica es Formulario, y "Sin origen" son oportunidades sin fuente cargada (por ejemplo, creadas a mano). "Otro" agrupa cualquier otra fuente; en la vista de lista se ve el nombre exacto. Las etapas cortan en Nutrición - confirmación: las que ya pasaron a los closers (Asistencia, No asistió, Seña, Venta) no se muestran.</footer>
 </div>
 
 <script>
@@ -194,7 +194,7 @@ const CATS = [
   {k:"sin",n:"Sin trabajar",d:"Nuevo Lead, Confirmar nicho"},
   {k:"abi",n:"Abiertas",d:"Conversando, Formulario enviado, No responde, Interesados sin dinero"},
   {k:"tri",n:"Triaje",d:"Antes de definir si pasan a llamada"},
-  {k:"con",n:"Confirmadas",d:"Nutrición - confirmación (y las que ya pasaron a los closers)"},
+  {k:"con",n:"Confirmadas",d:"Nutrición - confirmación"},
   {k:"pn",n:"Descalificadas por nicho",d:"Descualificado por nicho"},
   {k:"pi",n:"Descalificadas por inversión",d:"Descualificado por inversión"},
   {k:"ca",n:"Canceladas",d:"Cancelado - Setter"},
