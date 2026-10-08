@@ -5,13 +5,15 @@ import { timingSafeEqual } from "node:crypto";
 const env = (k, d) => process.env[k] || d;
 const GHL_TOKEN = env("GHL_TOKEN");
 const GHL_LOCATION = env("GHL_LOCATION", "x7nYndpXUc1dmpunATsZ");
-const GHL_PIPELINE = env("GHL_PIPELINE", "Hdnl2Kgw5kRk1rCNrwYW");
+const GHL_PIPELINE = env("GHL_PIPELINE", "Hdnl2Kgw5kRk1rCNrwYW");          // Agendas
+const GHL_PIPE_WEBINAR = env("GHL_PIPE_WEBINAR", "kY28NRmKxkvrkAUm1tOq"); // WEBINAR
+const GHL_PIPE_SEG = env("GHL_PIPE_SEG", "5pgmx29qxGQt7GpypecG");         // Seguimientos
 const PASSWORD = env("DASHBOARD_PASSWORD");
 const MAX_DAYS = 31;
 const DAY = 864e5;
 
 const cache = new Map(); // caché corta por instancia
-const CACHE_MS = 2 * 60 * 1000;
+const CACHE_MS = 5 * 60 * 1000;
 
 const json = (status, body) =>
   new Response(JSON.stringify(body), {
@@ -41,23 +43,41 @@ const toks = (s) => norm(s).split(" ").filter((w) => w.length > 1);
 async function ghl(path, params) {
   const u = new URL("https://services.leadconnectorhq.com" + path);
   for (const [k, v] of Object.entries(params || {})) if (v !== undefined && v !== "") u.searchParams.set(k, String(v));
-  const r = await fetch(u, {
-    headers: { Authorization: `Bearer ${GHL_TOKEN}`, Version: "2021-07-28", Accept: "application/json" },
-  });
-  if (!r.ok) throw { where: "ghl", code: `http_${r.status}`, detail: (await r.text()).slice(0, 300) };
-  return r.json();
+  // Si GHL responde 429 (demasiadas consultas juntas), espera y reintenta.
+  for (let attempt = 0; ; attempt++) {
+    const r = await fetch(u, {
+      headers: { Authorization: `Bearer ${GHL_TOKEN}`, Version: "2021-07-28", Accept: "application/json" },
+    });
+    if (r.status === 429 && attempt < 3) {
+      const ra = parseFloat(r.headers.get("retry-after") || "");
+      const wait = Math.min(Number.isFinite(ra) ? ra * 1000 : 800 * (attempt + 1), 2500);
+      await new Promise((res) => setTimeout(res, wait));
+      continue;
+    }
+    if (!r.ok) throw { where: "ghl", code: `http_${r.status}`, detail: (await r.text()).slice(0, 300) };
+    return r.json();
+  }
 }
 async function stageMap() {
   const j = await ghl("/opportunities/pipelines", { locationId: GHL_LOCATION });
-  const p = (j.pipelines || []).find((x) => x.id === GHL_PIPELINE);
-  if (!p) throw { where: "ghl", code: "pipeline_not_found" };
-  return Object.fromEntries((p.stages || []).map((s) => [s.id, s.name]));
+  const pipes = j.pipelines || [];
+  if (!pipes.some((x) => x.id === GHL_PIPELINE)) throw { where: "ghl", code: "pipeline_not_found" };
+  // Mapa de etapas de Agendas, WEBINAR y Seguimientos, y la lista de etapas de cada uno.
+  const map = {}, byPipe = {};
+  for (const x of pipes) {
+    if (![GHL_PIPELINE, GHL_PIPE_WEBINAR, GHL_PIPE_SEG].includes(x.id)) continue;
+    byPipe[x.id] = (x.stages || []).map((s) => ({ id: s.id, name: s.name }));
+    for (const s of x.stages || []) map[s.id] = s.name;
+  }
+  return { map, byPipe };
 }
 function slim(o, stages) {
   return {
     name: o.name || "",
     contact: o.contact?.name || "",
     email: o.contact?.email || "",
+    contactId: o.contactId || o.contact?.id || "",
+    tags: (o.contact?.tags || []).map((x) => norm(x)),
     stage: stages[o.pipelineStageId] || "Sin etapa",
     created: Date.parse(o.createdAt || o.dateAdded || 0) || 0,
     changed: Date.parse(o.lastStageChangeAt || o.updatedAt || o.createdAt || 0) || 0,
@@ -65,12 +85,12 @@ function slim(o, stages) {
     stageAt: Date.parse(o.lastStageChangeAt || o.createdAt || o.dateAdded || 0) || 0,
   };
 }
-async function searchOpps(stages, { q, sinceMs, max = 1500, stageId }) {
+async function searchOpps(stages, { q, sinceMs, max = 1500, stageId, pipelineId = GHL_PIPELINE }) {
   const out = [];
   let startAfter, startAfterId;
   for (let page = 0; page < Math.ceil(max / 100); page++) {
     const j = await ghl("/opportunities/search", {
-      location_id: GHL_LOCATION, pipeline_id: GHL_PIPELINE, pipeline_stage_id: stageId, limit: 100, q, startAfter, startAfterId,
+      location_id: GHL_LOCATION, pipeline_id: pipelineId, pipeline_stage_id: stageId, limit: 100, q, startAfter, startAfterId,
     });
     const items = j.opportunities || [];
     for (const o of items) out.push(slim(o, stages));
@@ -107,31 +127,72 @@ function srcCode(source) {
 // a la más vieja) y se miran las oportunidades creadas hasta LOOKBACK_DAYS
 // antes del inicio del período.
 const LOOKBACK_DAYS = 90;
+
+// Etapas de WEBINAR → columna del tablero. "Agendado" no se cuenta: esa persona ya está en Agendas.
+function webinarStage(name) {
+  const s = norm(name);
+  if (s.startsWith("agendado")) return null;
+  if (s.startsWith("low ticket")) return { stage: "Low ticket", cat: "form" };
+  if (s.startsWith("datos erroneos")) return { stage: "Datos erróneos", cat: "de" };
+  if (s.startsWith("descualificado")) return { stage: "Descualificado por nicho", cat: "pn" };
+  if (s.startsWith("new lead")) return { stage: "New Lead (webinar)", cat: "sin" };
+  return { stage: name + " (webinar)", cat: "rev" };
+}
+// En Seguimientos solo cuentan los leads de webinar que descalificó el form.
+const isFormDisq = (o) =>
+  /perdido|descualificado/.test(norm(o.stage)) &&
+  (o.tags.some((x) => x.includes("descualificado webinar")) || norm(o.source).includes("audit"));
+
 async function buildAll(from, to) {
-  const stages = await stageMap();
+  const { map: stages, byPipe } = await stageMap();
   const start = dayStart(from), end = dayStart(to) + DAY;
   const since = start - LOOKBACK_DAYS * DAY;
-  const perStage = await Promise.all(
-    Object.keys(stages).map((stageId) => searchOpps(stages, { stageId, sinceMs: since, max: 2000 }))
-  );
-  const seen = new Set();
-  // Las que ya pasaron a los closers (Asistencia, No asistió, Seña, Venta) no se cuentan.
+  const inRange = (o) => o.stageAt >= start && o.stageAt < end;
   const closer = (n) => /^(asistencia|no asistio|sena|venta)/.test(norm(n));
-  const opps = perStage.flat().filter((o) => {
-    if (closer(o.stage)) return false;
-    if (o.stageAt < start || o.stageAt >= end) return false;
-    const k = o.name + "|" + o.email + "|" + o.created;
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
+
+  // 1) Agendas: cada etapa por separado, de a 3 por vez para no saturar a GoHighLevel.
+  const agIds = (byPipe[GHL_PIPELINE] || []).map((s) => s.id), agendas = [];
+  for (let i = 0; i < agIds.length; i += 3) {
+    const batch = await Promise.all(agIds.slice(i, i + 3).map((stageId) => searchOpps(stages, { stageId, sinceMs: since, max: 2000 })));
+    batch.forEach((b) => agendas.push(...b));
+  }
+  // 2) WEBINAR completo y 3) Seguimientos solo en sus etapas de descalificados.
+  const segIds = (byPipe[GHL_PIPE_SEG] || []).filter((s) => /perdido|descualificado/.test(norm(s.name))).map((s) => s.id);
+  const [webinar, ...segParts] = await Promise.all([
+    byPipe[GHL_PIPE_WEBINAR] ? searchOpps(stages, { sinceMs: since, max: 2000, pipelineId: GHL_PIPE_WEBINAR }) : [],
+    ...segIds.map((stageId) => searchOpps(stages, { stageId, sinceMs: start - 3 * DAY, max: 3000, pipelineId: GHL_PIPE_SEG })),
+  ]);
+  const seg = segParts.flat();
+
+  // Cada persona se cuenta una sola vez: primero Agendas, después WEBINAR, después Seguimientos.
+  const seen = new Set();
+  const key = (o) => o.contactId || norm(o.contact || o.name) + "|" + o.email;
+  const take = (o) => { const k = key(o); if (seen.has(k)) return false; seen.add(k); return true; };
+  const rows = [];
+  const push = (o, src, stage, cat) => rows.push({
+    name: o.contact || o.name, email: o.email, day: dayKey(o.stageAt), time: hhmm(o.stageAt), at: o.stageAt,
+    src, source: o.source || "", stage, cat, why: null,
   });
-  return opps.sort((a, b) => b.stageAt - a.stageAt).map((o) => {
+
+  const recent = (a, b) => b.stageAt - a.stageAt;
+  agendas.sort(recent); webinar.sort(recent); seg.sort(recent);
+  for (const o of agendas) {
+    if (!take(o)) continue; // la persona está en Agendas: manda su etapa ahí (aunque esté fuera del período)
+    if (closer(o.stage) || !inRange(o)) continue;
     const stage = o.stage.replace(/\s*\|S$/, "");
-    return {
-      name: o.contact || o.name, email: o.email, day: dayKey(o.stageAt), time: hhmm(o.stageAt),
-      src: srcCode(o.source), source: o.source || "", stage, cat: stageCat(stage), why: null,
-    };
-  });
+    push(o, srcCode(o.source), stage, stageCat(stage));
+  }
+  for (const o of webinar) {
+    const w = webinarStage(o.stage);
+    if (!w) { seen.add(key(o)); continue; } // Agendado: ya cuenta en Agendas
+    if (!take(o) || !inRange(o)) continue;
+    push(o, "W", w.stage, w.cat);
+  }
+  for (const o of seg) {
+    if (!isFormDisq(o) || !take(o) || !inRange(o)) continue;
+    push(o, "W", "Descalificado por el form", "form");
+  }
+  return rows.sort((a, b) => b.at - a.at).map(({ at, ...r }) => r);
 }
 
 export default async (req) => {
@@ -155,6 +216,7 @@ export default async (req) => {
     const msgs = {
       http_401: "El token de GoHighLevel es inválido o venció.",
       http_403: "Al token de GoHighLevel le faltan permisos (ver oportunidades).",
+      http_429: "GoHighLevel recibió demasiadas consultas juntas. Esperá un minuto y tocá Actualizar.",
       pipeline_not_found: "No se encontró el pipeline Agendas en GoHighLevel.",
     };
     return json(502, { error: where, code: e?.code, message: msgs[e?.code] || `Falló ${where === "ghl" ? "GoHighLevel" : "el servidor"} (${e?.code || e?.message || "error"}).` });
