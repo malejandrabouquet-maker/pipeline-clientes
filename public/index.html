@@ -14,17 +14,17 @@
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
   --bg:#F3F4F7; --panel:#FFFFFF; --ink:#1C2230; --muted:#667085; --line:#E3E6EC; --chip:#EEF0F4;
-  --c-sin:#6B7280; --c-rev:#4B5563; --c-tri:#6366F1; --c-pn:#DC2626; --c-pi:#9D174D; --c-ca:#78716C; --c-abi:#E5940B; --c-con:#16A34A; --c-lla:#9B4DEB; --c-per:#D93636;
+  --c-sin:#6B7280; --c-rev:#4B5563; --c-tri:#6366F1; --c-pn:#DC2626; --c-pi:#9D174D; --c-ca:#78716C; --c-form:#B45309; --c-de:#475569; --c-abi:#E5940B; --c-con:#16A34A; --c-lla:#9B4DEB; --c-per:#D93636;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#181B22; --panel:#21252E; --ink:#E9ECF2; --muted:#9AA3B2; --line:#323846; --chip:#2B303B;
-    --c-sin:#9CA3AF; --c-rev:#8A93A3; --c-tri:#8B8DF7; --c-pn:#F05252; --c-pi:#E0628E; --c-ca:#A8A29E; --c-abi:#F5A524; --c-con:#2FBF62; --c-lla:#B57BF5; --c-per:#F05252;
+    --c-sin:#9CA3AF; --c-rev:#8A93A3; --c-tri:#8B8DF7; --c-pn:#F05252; --c-pi:#E0628E; --c-ca:#A8A29E; --c-form:#F59E0B; --c-de:#94A3B8; --c-abi:#F5A524; --c-con:#2FBF62; --c-lla:#B57BF5; --c-per:#F05252;
   }
 }
 :root[data-theme="dark"]{
   --bg:#181B22; --panel:#21252E; --ink:#E9ECF2; --muted:#9AA3B2; --line:#323846; --chip:#2B303B;
-  --c-sin:#9CA3AF; --c-rev:#8A93A3; --c-tri:#8B8DF7; --c-pn:#F05252; --c-pi:#E0628E; --c-ca:#A8A29E; --c-abi:#F5A524; --c-con:#2FBF62; --c-lla:#B57BF5; --c-per:#F05252;
+  --c-sin:#9CA3AF; --c-rev:#8A93A3; --c-tri:#8B8DF7; --c-pn:#F05252; --c-pi:#E0628E; --c-ca:#A8A29E; --c-form:#F59E0B; --c-de:#94A3B8; --c-abi:#F5A524; --c-con:#2FBF62; --c-lla:#B57BF5; --c-per:#F05252;
 }
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -75,8 +75,8 @@ input[type=search]:focus-visible{outline:2px solid var(--c-abi);outline-offset:1
 
 /* Tablero */
 .board{display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:12px;overflow-x:auto;padding-bottom:6px;align-items:start}
-.col{background:var(--chip);border-radius:12px;padding:10px;min-height:120px}
-.col h2{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:700;margin:2px 4px 10px}
+.col{background:var(--chip);border-radius:12px;padding:10px;min-height:120px;max-height:min(78vh,820px);overflow-y:auto;overscroll-behavior:contain;padding-top:0}
+.col h2{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:700;margin:2px 4px 10px;position:sticky;top:0;z-index:1;background:var(--chip);margin:0 -10px 10px;padding:12px 14px 6px}
 .col h2 .count{margin-left:auto;font-weight:700;color:var(--muted)}
 .col h2 .dot{width:10px;height:10px}
 .col .stages{color:var(--muted);font-size:12.5px;margin:-6px 4px 10px;line-height:1.3}
@@ -117,13 +117,17 @@ footer{color:var(--muted);font-size:12.5px;margin-top:22px;max-width:76ch}
 .steps li.done::before{content:"✓ ";color:var(--c-con);font-weight:700}
 .steps li.now::before{content:"… ";font-weight:700}
 .why{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.3}
+.board::-webkit-scrollbar{height:12px}
+.board::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
+.col::-webkit-scrollbar{width:8px}
+.col::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div><h1 id="title">PIPELINE CLIENTES</h1><div class="period" id="period"></div></div>
-    <div class="snap" id="snap">Oportunidades del pipeline Agendas según su último cambio de etapa.</div>
+    <div class="snap" id="snap">Agendas, WEBINAR y descalificados por el form, según su último cambio de etapa.</div>
   </header>
 
   <div class="range" id="range">
@@ -162,7 +166,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:22px;max-width:76ch}
   <div class="list hidden" id="list"></div>
   </div>
 
-  <footer>Muestra todas las oportunidades del pipeline Agendas cuya etapa cambió por última vez en el período, hayan llegado o no a Slack; el día es el del último cambio de etapa (si nunca cambió, el día en que se creó). Se revisan oportunidades creadas hasta 90 días antes del período. El origen sale del campo "fuente" de la oportunidad: VSL es Ads, VSL BIO es Bio, Solicitud de sesión estratégica es Formulario, y "Sin origen" son oportunidades sin fuente cargada (por ejemplo, creadas a mano). "Otro" agrupa cualquier otra fuente; en la vista de lista se ve el nombre exacto. Las etapas cortan en Nutrición - confirmación: las que ya pasaron a los closers (Asistencia, No asistió, Seña, Venta) no se muestran.</footer>
+  <footer>Vista global: todas las oportunidades cuya etapa cambió por última vez en el período (si nunca cambió, el día en que se creó). Incluye el pipeline Agendas, los leads de WEBINAR que no pasaron a Agendas (New Lead, low ticket, datos erróneos, descalificados por nicho) y los descalificados por el form que quedaron en Seguimientos. Cada persona se cuenta una sola vez, con prioridad Agendas, después WEBINAR, después Seguimientos. Las que ya pasaron a los closers (Asistencia, No asistió, Seña, Venta) no se muestran. Origen según la fuente de GHL: VSL es Ads, VSL BIO es Bio, Auditoría es Webinar, Solicitud es Formulario y "Sin origen" son oportunidades sin fuente cargada.</footer>
 </div>
 
 <script>
@@ -185,12 +189,15 @@ const STAGE_COL = n => {
   if (s.startsWith("descualificado")) return "#9D174D";
   if (s.startsWith("cancelado")) return "#78716C";
   if (s.startsWith("triaje")) return "#6366F1";
+  if (s.startsWith("descalificado por el form")||s.startsWith("low ticket")) return "#B45309";
+  if (s.startsWith("datos erroneos")) return "#475569";
   if (s.startsWith("no responde")) return "#DB2777";
   if (s.startsWith("conversando")||s.startsWith("formulario")) return "#C77C05";
   if (s.startsWith("interesados")) return "#6366F1";
   return "#4B5563";
 };
 const CATS = [
+  {k:"form",n:"Descalificados por el form",d:"Webinar: no pasaron el filtro del form (Seguimientos) o recibieron low ticket"},
   {k:"sin",n:"Sin trabajar",d:"Nuevo Lead, Confirmar nicho"},
   {k:"abi",n:"Abiertas",d:"Conversando, Formulario enviado, No responde, Interesados sin dinero"},
   {k:"tri",n:"Triaje",d:"Antes de definir si pasan a llamada"},
@@ -198,6 +205,7 @@ const CATS = [
   {k:"pn",n:"Descalificadas por nicho",d:"Descualificado por nicho"},
   {k:"pi",n:"Descalificadas por inversión",d:"Descualificado por inversión"},
   {k:"ca",n:"Canceladas",d:"Cancelado - Setter"},
+  {k:"de",n:"Datos erróneos",d:"Webinar: pasaron el filtro pero no se les pudo enviar nada"},
   {k:"rev",n:"Para revisar",d:"No se encontraron en GHL o el match es dudoso"}
 ];
 const SRC = {A:"Ads",B:"Bio",W:"Webinar",F:"Formulario",M:"Sin origen",O:"Otro"};
@@ -258,7 +266,7 @@ async function load(fresh){
       return;
     }
     state.days.clear();
-    document.getElementById("snap").textContent=`Oportunidades del pipeline Agendas según su último cambio de etapa. Actualizado hoy a las ${hmFmt.format(new Date(j.updatedAt||Date.now()))}.`;
+    document.getElementById("snap").textContent=`Agendas, WEBINAR y descalificados por el form, según su último cambio de etapa. Actualizado hoy a las ${hmFmt.format(new Date(j.updatedAt||Date.now()))}.`;
     document.getElementById("status").classList.add("hidden");
     document.getElementById("content").classList.remove("hidden");
     buildDayChips(); render();
@@ -361,7 +369,7 @@ function render(){
     board.append(col);
   });
   list.innerHTML=`<table><thead><tr><th>Nombre</th><th>Correo</th><th>Último cambio de etapa</th><th>Fuente en GHL</th><th>Origen</th><th>Etapa</th><th>Estado</th></tr></thead><tbody>${
-    rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${r.email?esc(r.email):"<span style='color:var(--muted)'>–</span>"}</td><td>${dayLbl(r.day)}</td><td>${r.source?esc(r.source):"<span style='color:var(--muted)'>–</span>"}</td><td>${SRC[r.src]}</td><td><span class="tag st" style="background:${r.cat==="rev"?"#4B5563":STAGE_COL(r.stage)}">${esc(r.stage)}</span></td><td>${CATS.find(c=>c.k===r.cat).n}</td></tr>`).join("")
+    rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${r.email?esc(r.email):"<span style='color:var(--muted)'>–</span>"}</td><td>${dayLbl(r.day)}</td><td>${r.source?esc(r.source):"<span style='color:var(--muted)'>–</span>"}</td><td>${SRC[r.src]}</td><td><span class="tag st" style="background:${r.cat==="rev"?"#4B5563":STAGE_COL(r.stage)}">${esc(r.stage)}</span></td><td>${(CATS.find(c=>c.k===r.cat)||{n:r.cat}).n}</td></tr>`).join("")
   }</tbody></table>${rows.length?"":`<div class="empty" style="padding:16px">No hay agendas con estos filtros.</div>`}`;
 }
 function drawBar(barId,legId,items,sel,total){
